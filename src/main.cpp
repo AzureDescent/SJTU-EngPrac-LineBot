@@ -14,14 +14,14 @@ uint16_t sensorValue_R1;
 uint16_t sensorValue_R2;
 
 const int THRESHOLD = 740; //传感器阈值 白色均值约980 黑色约350
-const int SERVO_CENTER = 90;   // 你的舵机中值
-const int BASE_SPEED = 200;    // 你的基础速度
-const int SPEED_DIFF = 9;      // 【关键】你的直线修正在这里：A电机比B电机快9
+const int SERVO_CENTER = 90; // 你的舵机中值
+const int BASE_SPEED = 200; // 你的基础速度
+const int SPEED_DIFF = 9; // 【关键】你的直线修正在这里：A电机比B电机快9
 
 // 转向参数
-const int TURN_LIMIT = 40;     // 最大转向角度 (40度)
-const float KP = 1.8;          // 转向灵敏度 (1.0~2.0之间调整)
-                               // 差速力度 = 角度 * KP。例如转30度时，电机速度改变 36
+const int TURN_LIMIT = 40; // 最大转向角度 (40度)
+const float KP = 1.8; // 转向灵敏度 (1.0~2.0之间调整)
+// 差速力度 = 角度 * KP。例如转30度时，电机速度改变 36
 
 // 记忆变量 (-1:偏左, 1:偏右, 0:直行)
 int lastErrorDirection = 0;
@@ -130,87 +130,64 @@ void setup()
     MotorInit();
 
     myservo.write(90);
-    delay(5000);
+    delay(500);
 }
 
 void loop()
 {
-    // int32_t ticks = millis();
-
-    // 测试传感器读取和打印
-    // SensorRead();
-    // SensorPrint();
-    // delay(50);
-
-    // 测试电机驱动
-    // MotorTest();
-
-    // A_Motor(HIGH, 100);
-    // B_Motor(LOW, 100);
-    // 测试舵机转动
-    // ServoTest();
-    // delay(100);
-
     bool l2 = analogRead(SENSOR_L2) < THRESHOLD;
     bool l1 = analogRead(SENSOR_L1) < THRESHOLD;
-    bool m  = analogRead(SENSOR_M)  < THRESHOLD;
+    bool m = analogRead(SENSOR_M) < THRESHOLD;
     bool r1 = analogRead(SENSOR_R1) < THRESHOLD;
     bool r2 = analogRead(SENSOR_R2) < THRESHOLD;
 
     double steerAngle = 0;
 
-    // [逻辑判断] 优先级：中间 -> 一级偏 -> 二级偏 -> 丢失目标
-    if (m) {
+    if (m)
+    {
         steerAngle = 0;
-        lastErrorDirection = 0; // 回到正轨，清除记忆
+        lastErrorDirection = 0;
     }
-    else if (l1) { // 左侧压线 -> 车身偏右 -> 向左修
-        steerAngle = TURN_LIMIT * 0.6; // 小角度
+    else if (l1)
+    {
+        steerAngle = TURN_LIMIT * 0.6;
         lastErrorDirection = 1;
     }
-    else if (r1) { // 右侧压线 -> 车身偏左 -> 向右修
+    else if (r1)
+    {
         steerAngle = -TURN_LIMIT * 0.6;
         lastErrorDirection = -1;
     }
-    else if (l2) { // 最左侧压线 -> 严重偏右 -> 大角度向左
+    else if (l2)
+    {
         steerAngle = TURN_LIMIT;
         lastErrorDirection = 1;
     }
-    else if (r2) { // 最右侧压线 -> 严重偏左 -> 大角度向右
+    else if (r2)
+    {
         steerAngle = -TURN_LIMIT;
         lastErrorDirection = -1;
     }
-    else {
-        // [全白/丢失目标] 执行“记忆回切”
-        // 利用 lastErrorDirection 知道上次是往哪边偏的，继续往那个方向转，直到找回黑线
+    else
+    {
         steerAngle = TURN_LIMIT * 1.2 * lastErrorDirection;
     }
 
-    // [舵机执行]
-    // 注意：servo.write(90 + 正数) 是向左还是向右？
-    // 通常 90+ 是向左。如果跑反了，把下面的 + 改成 -
     int finalServoAngle = SERVO_CENTER + steerAngle;
-    finalServoAngle = constrain(finalServoAngle, 45, 135); // 保护舵机
+    finalServoAngle = constrain(finalServoAngle, 45, 135);
     myservo.write(finalServoAngle);
 
-    // [电机差速计算] (核心修改部分)
-    // 基础逻辑：在直线修正的基础上，叠加转向差速
-    // 如果 steerAngle > 0 (向左转)，需要：右轮(A)加速，左轮(B)减速
+    int turnAdj = steerAngle * KP;
 
-    int turnAdj = steerAngle * KP; // 计算转向带来的速度变化量
-
-    // A电机 (左轮): 基础200 + 直线修正9 + 转向加速(向左转时)
     int speedA = (BASE_SPEED + SPEED_DIFF) - turnAdj;
 
-    // B电机 (右轮): 基础200 - 直线修正9 - 转向加速(向左转时)
     int speedB = (BASE_SPEED - SPEED_DIFF) + turnAdj;
 
-    // 限制速度范围 (防止超过255或低于0)
     speedA = constrain(speedA, 0, 255);
     speedB = constrain(speedB, 0, 255);
 
     A_Motor(HIGH, speedA);
     B_Motor(LOW, speedB);
 
-    delay(10); // 短暂循环延时
+    delay(10);
 }
