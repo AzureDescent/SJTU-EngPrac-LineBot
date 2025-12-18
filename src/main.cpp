@@ -60,9 +60,9 @@ void SensorRead()
 
 void SensorPrint()
 {
-    Serial.print(sensorValue_L1);
-    Serial.print(",");
     Serial.print(sensorValue_L2);
+    Serial.print(",");
+    Serial.print(sensorValue_L1);
     Serial.print(",");
     Serial.print(sensorValue_M);
     Serial.print(",");
