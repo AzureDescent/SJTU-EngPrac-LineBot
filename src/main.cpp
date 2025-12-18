@@ -132,4 +132,5 @@ void loop()
 
     // 测试舵机转动
     ServoTest();
+    digitalRead(servoIO);
 }
