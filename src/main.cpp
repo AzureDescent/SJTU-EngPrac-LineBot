@@ -25,9 +25,9 @@ const int BRAKE_SENSITIVITY = 30; // 刹车灵敏度：PID输出超过此值即�
 
 // --- PID 参数 (针对"直道扭动"优化) ---
 // 之前的 Kp=20 太大了，导致直道震荡。
-float Kp = 14.0;  // 降低 P，减小直道上的过激反应
+float Kp = 16.0;  // 降低 P，减小直道上的过激反应
 float Ki = 0.0;   // 保持 0
-float Kd = 40.0;  // [关键] 大幅提升 D。D是"阻尼器"，能抑制左右扭动，让车"粘"在线上
+float Kd = 55.0;  // [关键] 大幅提升 D。D是"阻尼器"，能抑制左右扭动，让车"粘"在线上
 
 // PID 变量
 float lastError = 0;
@@ -45,17 +45,24 @@ int B_DIR = 4; //控制方向
 Servo myservo;
 
 //A组电机驱动控制函数
-void A_Motor(int dir, int speed)
-{
-    digitalWrite(A_DIR, dir);
-    analogWrite(A_PWM, speed);
+void SmartMotorA(int speed) {
+    if (speed >= 0) {
+        digitalWrite(A_DIR, HIGH); // 正转方向
+        analogWrite(A_PWM, constrain(speed, 0, 255));
+    } else {
+        digitalWrite(A_DIR, LOW);  // 反转方向
+        analogWrite(A_PWM, constrain(abs(speed), 0, 255));
+    }
 }
 
-//B组电机驱动控制函数
-void B_Motor(int dir, int speed)
-{
-    digitalWrite(B_DIR, dir);
-    analogWrite(B_PWM, speed);
+void SmartMotorB(int speed) {
+    if (speed >= 0) {
+        digitalWrite(B_DIR, LOW);  // 正转方向
+        analogWrite(B_PWM, constrain(speed, 0, 255));
+    } else {
+        digitalWrite(B_DIR, HIGH); // 反转方向
+        analogWrite(B_PWM, constrain(abs(speed), 0, 255));
+    }
 }
 
 void SensorInit()
@@ -97,16 +104,16 @@ void SensorPrint()
     Serial.println(sensorValue_R2);
 }
 
-void MotorTest()
-{
-    // NOTE: A HIGH 电平为正转 B LOW 电平为正转
+// void MotorTest()
+// {
+//     // NOTE: A HIGH 电平为正转 B LOW 电平为正转
 
-    int8_t baseSpeed = 200; //基础速度值
-    int8_t speedDiff = 9; //速度差值
-    // 当前差速可以走直线
-    A_Motor(HIGH, baseSpeed + speedDiff);
-    B_Motor(LOW, baseSpeed - speedDiff);
-}
+//     int8_t baseSpeed = 200; //基础速度值
+//     int8_t speedDiff = 9; //速度差值
+//     // 当前差速可以走直线
+//     A_Motor(HIGH, baseSpeed + speedDiff);
+//     B_Motor(LOW, baseSpeed - speedDiff);
+// }
 
 void ServoTest()
 {
@@ -145,13 +152,15 @@ float calculateError() {
     int activeSensors = s_l2 + s_l1 + s_m + s_r1 + s_r2;
 
     if (activeSensors == 0) {
-        if (lastDirectionMemory > 0) return 2.5;
-        if (lastDirectionMemory < 0) return -2.5;
+        if (lastDirectionMemory > 0) return 3.5; // 加大丢失后的回正力度
+        if (lastDirectionMemory < 0) return -3.5;
         return 0;
     }
 
-    // 权重: L2(2), L1(1), M(0), R1(-1), R2(-2)
-    float weightedSum = (s_l2 * 2.0) + (s_l1 * 1.0) + (s_m * 0) + (s_r1 * -1.0) + (s_r2 * -2.0);
+    // [关键修改] 加大最外侧传感器的权重
+    // 让 L2/R2 的一旦触发，Error 直接飙升，触发急刹和反转
+    // 权重: L2(3.5), L1(1.5), M(0), R1(-1.5), R2(-3.5)
+    float weightedSum = (s_l2 * 3.5) + (s_l1 * 1.5) + (s_m * 0) + (s_r1 * -1.5) + (s_r2 * -3.5);
     float error = weightedSum / activeSensors;
 
     if (error > 0.1) lastDirectionMemory = 1;
@@ -161,65 +170,56 @@ float calculateError() {
 }
 
 void loop() {
-    // 1. 获取误差
     float error = calculateError();
 
-    // 2. PID 计算
     float P = error * Kp;
     float D = (error - lastError) * Kd;
     lastError = error;
 
-    // PID 总输出 (代表转向猛烈程度)
     float pidOutput = P + D;
 
-    // 3. 执行控制
-
-    // [舵机控制]
-    // 直接使用 pidOutput，不要乘系数，靠调大 Kp 来解决
+    // 1. 舵机控制
     int servoAngle = SERVO_CENTER + pidOutput;
     servoAngle = constrain(servoAngle, 35, 145);
     myservo.write(servoAngle);
 
-    // [动态速度策略] - 解决弯道冲出 + 提升整体圈速
-    // 逻辑：如果 pidOutput 很大（说明在急转弯），则降低基础速度；如果在直道，全速前进
-
+    // 2. 动态基准速度
     int currentBaseSpeed = MAX_SPEED;
     float absOutput = abs(pidOutput);
 
-    // 如果转向幅度超过阈值，开始线性减速
+    // 更加激进的减速策略
     if (absOutput > BRAKE_SENSITIVITY) {
-        // 这是一个简单的线性映射：转向越猛，速度越慢
-        // 比如 pidOutput = 50 (急弯)，速度降到 CORNER_SPEED
-        float brakeFactor = (absOutput - BRAKE_SENSITIVITY) / 20.0;
+        float brakeFactor = (absOutput - BRAKE_SENSITIVITY) / 15.0; // 分母改小，刹车更灵敏
         brakeFactor = constrain(brakeFactor, 0.0, 1.0);
-
-        // 在 MAX_SPEED 和 CORNER_SPEED 之间动态切换
         currentBaseSpeed = MAX_SPEED - (MAX_SPEED - CORNER_SPEED) * brakeFactor;
     }
 
-    // [差速控制]
-    // 转向越猛，差速越大。
-    // 对于 U 形弯，我们需要内侧轮极慢，甚至轻微反转
+    // 3. 强力差速控制 (允许反转)
+    // 这里的系数 3.5 意味着：如果 pidOutput 是 40 (急弯)，速度调整量就是 140
+    // 如果基准速度降到了 90，内侧轮就会变成 90 - 140 = -50 (反转!)
+    int speedAdj = absOutput * 3.0;
 
-    int speedAdj = absOutput * 3.0; // 差速系数，决定了转弯时左右轮速差多大
-
+    // A是右轮，B是左轮
+    // 基础修正 SPEED_DIFF (9)
     int speedA = currentBaseSpeed + SPEED_DIFF;
     int speedB = currentBaseSpeed - SPEED_DIFF;
 
-    if (pidOutput > 0) { // 向左转
-        speedA -= speedAdj * 0.5; // 外侧轮少加点，防止超速
-        speedB += speedAdj * 1.2; // 【关键】内侧轮狠减速
-    } else { // 向右转
-        speedA += speedAdj * 1.2; // 【关键】内侧轮狠减速
-        speedB -= speedAdj * 0.5;
+    if (pidOutput > 0) { // 向左转 (Left Turn)
+        // 外侧轮(A/右) 加速不宜过多，防止冲出去
+        speedA -= speedAdj * 0.3;
+        // 内侧轮(B/左) 疯狂减速甚至反转
+        speedB += speedAdj * 1.2;
+    } else { // 向右转 (Right Turn)
+        // 内侧轮(A/右) 疯狂减速甚至反转
+        speedA += speedAdj * 1.2;
+        // 外侧轮(B/左) 加速不宜过多
+        speedB -= speedAdj * 0.3;
     }
 
-    // 限制范围
-    speedA = constrain(speedA, 0, 255);
-    speedB = constrain(speedB, 0, 255);
-
-    A_Motor(HIGH, speedA);
-    B_Motor(LOW, speedB);
+    // 这里不再使用 constrain(0, 255)，而是允许负数传入 SmartMotor
+    // SmartMotor 内部会处理 abs() 和方向
+    SmartMotorA(speedA);
+    SmartMotorB(speedB);
 
     delay(5);
 }
