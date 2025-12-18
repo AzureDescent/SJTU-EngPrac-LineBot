@@ -90,12 +90,12 @@ void MotorTest()
     // NOTE: A HIGH 电平为正转 B LOW 电平为正转
 
     // 测试电机正转转速差
-    A_Motor(HIGH, 200); //A电机正转，速度值200
-    B_Motor(LOW, 200); //B电机正转，速度值200
+    // A_Motor(HIGH, 200); //A电机正转，速度值200
+    // B_Motor(LOW, 200); //B电机正转，速度值200
 
     // 根据实际情况调整小车转速差，使得小车能直线前进
-    int8_t speedDiff = 0; //速度差值
-    int8_t baseSpeed = -8.5; //基础速度值
+    int8_t baseSpeed = 200; //基础速度值
+    int8_t speedDiff = 9; //速度差值
     // 当前差速可以走直线
     A_Motor(HIGH, baseSpeed + speedDiff);
     B_Motor(LOW, baseSpeed - speedDiff);
