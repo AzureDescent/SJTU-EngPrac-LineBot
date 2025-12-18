@@ -187,7 +187,7 @@ void loop() {
 
     // 更加激进的减速策略
     if (absOutput > BRAKE_SENSITIVITY) {
-        float brakeFactor = (absOutput - BRAKE_SENSITIVITY) / 15.0; // 分母改小，刹车更灵敏
+        float brakeFactor = (absOutput - BRAKE_SENSITIVITY) / 35.0; // 分母改小，刹车更灵敏
         brakeFactor = constrain(brakeFactor, 0.0, 1.0);
         currentBaseSpeed = MAX_SPEED - (MAX_SPEED - CORNER_SPEED) * brakeFactor;
     }
@@ -195,7 +195,7 @@ void loop() {
     // 3. 强力差速控制 (允许反转)
     // 这里的系数 3.5 意味着：如果 pidOutput 是 40 (急弯)，速度调整量就是 140
     // 如果基准速度降到了 90，内侧轮就会变成 90 - 140 = -50 (反转!)
-    int speedAdj = absOutput * 3.5;
+    int speedAdj = absOutput * 3.2;
 
     // A是右轮，B是左轮
     // 基础修正 SPEED_DIFF (9)
