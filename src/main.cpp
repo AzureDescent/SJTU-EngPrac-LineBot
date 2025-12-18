@@ -195,8 +195,8 @@ void loop()
 
     // [舵机控制]
     // 基础中心 + PID修正量
-    int servoAngle = SERVO_CENTER + pidOutput;
-    servoAngle = constrain(servoAngle, 45, 135); // 物理限位
+    int servoAngle = SERVO_CENTER + pidOutput * 1.25;
+    servoAngle = constrain(servoAngle, 40, 140); // 物理限位
     myservo.write(servoAngle);
 
     // [差速控制]
