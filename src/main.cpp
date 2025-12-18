@@ -135,9 +135,10 @@ void loop()
     // delay(50);
 
     // 测试电机驱动
-    MotorTest();
+    // MotorTest();
 
+    A_Motor(HIGH, 100);
+    B_Motor(LOW, 100);
     // 测试舵机转动
-    // ServoTest();
-    // digitalRead(servoIO);
+    ServoTest();
 }
