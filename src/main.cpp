@@ -13,21 +13,20 @@ uint16_t sensorValue_M;
 uint16_t sensorValue_R1;
 uint16_t sensorValue_R2;
 
-// --- 全局变量 ---
+// --- 你的原始参数 ---
 const int THRESHOLD = 740;
 const int SERVO_CENTER = 90;
-const int SPEED_DIFF = 9;      // 直线修正
+const int SPEED_DIFF = 9;
 
-// --- 速度策略 (动态速度) ---
-const int MAX_SPEED = 246;     // [狂飙模式] 直道最高速
-const int CORNER_SPEED = 120;  // [过弯模式] 弯道基准速 (过U形弯必须慢)
-const int BRAKE_SENSITIVITY = 30; // 刹车灵敏度：PID输出超过此值即判定为弯道
+// --- 速度策略 (U弯特化) ---
+const int MAX_SPEED = 240;     // 直道可以快
+const int CORNER_SPEED = 90;   // [关键] 弯道基准速度进一步降低，保证抓地力
+const int BRAKE_SENSITIVITY = 25;
 
-// --- PID 参数 (针对"直道扭动"优化) ---
-// 之前的 Kp=20 太大了，导致直道震荡。
-float Kp = 16.0;  // 降低 P，减小直道上的过激反应
-float Ki = 0.0;   // 保持 0
-float Kd = 55.0;  // [关键] 大幅提升 D。D是"阻尼器"，能抑制左右扭动，让车"粘"在线上
+// --- PID 参数 ---
+float Kp = 16.0;  // 稍微加大一点P，配合反转
+float Ki = 0.0;
+float Kd = 55.0;  // [关键] 巨量 D，防止反转带来的瞬间抖动
 
 // PID 变量
 float lastError = 0;
@@ -44,7 +43,6 @@ int B_DIR = 4; //控制方向
 
 Servo myservo;
 
-//A组电机驱动控制函数
 void SmartMotorA(int speed) {
     if (speed >= 0) {
         digitalWrite(A_DIR, HIGH); // 正转方向
@@ -197,7 +195,7 @@ void loop() {
     // 3. 强力差速控制 (允许反转)
     // 这里的系数 3.5 意味着：如果 pidOutput 是 40 (急弯)，速度调整量就是 140
     // 如果基准速度降到了 90，内侧轮就会变成 90 - 140 = -50 (反转!)
-    int speedAdj = absOutput * 3.0;
+    int speedAdj = absOutput * 3.5;
 
     // A是右轮，B是左轮
     // 基础修正 SPEED_DIFF (9)
