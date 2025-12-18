@@ -14,6 +14,12 @@ uint16_t sensorValue_R1;
 uint16_t sensorValue_R2;
 
 const int THRESHOLD = 740; //传感器阈值 白色均值约980 黑色约350
+const int SERVO_CENTER = 90;   // 舵机物理中值 (根据你的ServoTest调整)
+const int BASE_SPEED = 180;    // 基础巡航速度 (不要设太快，推荐150-200)
+const int TURN_LIMIT = 35;     // 舵机最大转向修正角度
+const float KP = 1.5;          // 差速系数: 越大转弯时两侧轮速差越大
+
+int lastErrorDirection = 0;
 
 const int servoIO = 8; //舵机控制引脚
 
@@ -89,7 +95,8 @@ void MotorTest()
 
     // 根据实际情况调整小车转速差，使得小车能直线前进
     int8_t speedDiff = 0; //速度差值
-    int8_t baseSpeed = 200; //基础速度值
+    int8_t baseSpeed = -8.5; //基础速度值
+    // 当前差速可以走直线
     A_Motor(HIGH, baseSpeed + speedDiff);
     B_Motor(LOW, baseSpeed - speedDiff);
 }
@@ -131,6 +138,6 @@ void loop()
     MotorTest();
 
     // 测试舵机转动
-    ServoTest();
-    digitalRead(servoIO);
+    // ServoTest();
+    // digitalRead(servoIO);
 }
