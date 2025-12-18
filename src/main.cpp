@@ -49,6 +49,13 @@ void SensorInit()
     pinMode(SENSOR_R2, INPUT);
 }
 
+void MotorInit(){
+    pinMode(A_DIR, OUTPUT);
+    pinMode(A_PWM, OUTPUT);
+    pinMode(B_DIR, OUTPUT);
+    pinMode(B_PWM, OUTPUT);
+}
+
 void SensorRead()
 {
     sensorValue_L2 = analogRead(SENSOR_L2);
@@ -71,17 +78,27 @@ void SensorPrint()
     Serial.println(sensorValue_R2);
 }
 
+void MotorTest()
+{
+    // NOTE: A HIGH 电平为正转 B LOW 电平为正转
+
+    // 测试电机正转转速差
+    A_Motor(HIGH, 200); //A电机正转，速度值200
+    B_Motor(LOW, 200); //B电机正转，速度值200
+
+    // 根据实际情况调整小车转速差，使得小车能直线前进
+    int8_t speedDiff = 0; //速度差值
+    int8_t baseSpeed = 200; //基础速度值
+    A_Motor(HIGH, baseSpeed + speedDiff);
+    B_Motor(LOW, baseSpeed - speedDiff);
+}
+
 void setup()
 {
-    // put your setup code here, to run once:
     Serial.begin(9600);
 
     SensorInit();
-
-    // pinMode(A_DIR, OUTPUT);
-    // pinMode(A_PWM, OUTPUT);
-    // pinMode(B_DIR, OUTPUT);
-    // pinMode(B_PWM, OUTPUT);
+    MotorInit();
 }
 
 void loop()
@@ -89,14 +106,10 @@ void loop()
     // int32_t ticks = millis();
 
     // 测试传感器读取和打印
-    SensorRead();
-    SensorPrint();
-    delay(50);
+    // SensorRead();
+    // SensorPrint();
+    // delay(50);
 
-    A_Motor(HIGH,125);//A电机正转（默认HIGH为正转），速度值125
-    // B_Motor(HIGH,125);//B电机正转（默认HIGH为正转），速度值125
-    // delay(1000);      //延时等待1000ms
-    // A_Motor(LOW,80);  //A电机反转（默认LOW为转），速度值80
-    // B_Motor(LOW,80);  //B电机反转（默认LOW为转），速度值80
-    // delay(1000);      //延时等待1000ms
+    // 测试电机驱动
+    MotorTest();
 }
