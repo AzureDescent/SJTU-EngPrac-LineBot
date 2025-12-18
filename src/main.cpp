@@ -15,7 +15,7 @@ uint16_t sensorValue_R2;
 
 const int THRESHOLD = 740; //传感器阈值 白色均值约980 黑色约350
 
-const int PIN_L_PWM = 5;
+const int servoIO = 8; //舵机控制引脚
 
 //A组电机驱动
 int A_PWM = 6; //控制速度
@@ -49,7 +49,8 @@ void SensorInit()
     pinMode(SENSOR_R2, INPUT);
 }
 
-void MotorInit(){
+void MotorInit()
+{
     pinMode(A_DIR, OUTPUT);
     pinMode(A_PWM, OUTPUT);
     pinMode(B_DIR, OUTPUT);
@@ -93,9 +94,25 @@ void MotorTest()
     B_Motor(LOW, baseSpeed - speedDiff);
 }
 
+void ServoTest()
+{
+    // 测试舵机转动并确定中间位置
+    int middle = 90;
+    int Min = 50;
+    int Max = 130;
+
+    myservo.write(Min);
+    delay(1000);
+    myservo.write(Max);
+    delay(1000);
+    myservo.write(middle);
+    delay(1000);
+}
+
 void setup()
 {
     Serial.begin(9600);
+    myservo.attach(servoIO);
 
     SensorInit();
     MotorInit();
@@ -112,4 +129,7 @@ void loop()
 
     // 测试电机驱动
     MotorTest();
+
+    // 测试舵机转动
+    ServoTest();
 }
