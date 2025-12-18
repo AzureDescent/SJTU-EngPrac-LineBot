@@ -15,12 +15,12 @@ uint16_t sensorValue_R2;
 
 const int THRESHOLD = 740; //传感器阈值 白色均值约980 黑色约350
 const int SERVO_CENTER = 90; // 你的舵机中值
-const int BASE_SPEED = 250; // 你的基础速度
+const int BASE_SPEED = 246; // 你的基础速度
 const int SPEED_DIFF = 9; // 【关键】你的直线修正在这里：A电机比B电机快9
 
 // 转向参数
 const int TURN_LIMIT = 45; // 最大转向角度 (40度)
-const float KP = 2.2; // 转向灵敏度 (1.0~2.0之间调整)
+const float KP = 2.23; // 转向灵敏度 (1.0~2.0之间调整)
 // 差速力度 = 角度 * KP。例如转30度时，电机速度改变 36
 
 // 记忆变量 (-1:偏左, 1:偏右, 0:直行)
