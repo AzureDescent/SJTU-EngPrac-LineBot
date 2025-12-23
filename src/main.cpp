@@ -15,12 +15,12 @@ uint16_t sensorValue_R2;
 
 const int THRESHOLD = 740; //传感器阈值 白色均值约980 黑色约350
 const int SERVO_CENTER = 90; // 你的舵机中值
-const int BASE_SPEED = 246; // 你的基础速度
+const int BASE_SPEED = 250; // 你的基础速度
 const int SPEED_DIFF = 9; // 【关键】你的直线修正在这里：A电机比B电机快9
 
 // 转向参数
 const int TURN_LIMIT = 45; // 最大转向角度 (40度)
-const float KP = 2.23; // 转向灵敏度 (1.0~2.0之间调整)
+const float KP = 2.22; // 转向灵敏度 (1.0~2.0之间调整)
 // 差速力度 = 角度 * KP。例如转30度时，电机速度改变 36
 
 // 记忆变量 (-1:偏左, 1:偏右, 0:直行)
@@ -124,65 +124,70 @@ void setup()
     SensorInit();
     MotorInit();
 
-    myservo.write(90);
-    delay(500);
+    myservo.write(92);
+    delay(100);
 }
 
 void loop()
 {
-    bool l2 = analogRead(SENSOR_L2) < THRESHOLD;
-    bool l1 = analogRead(SENSOR_L1) < THRESHOLD;
-    bool m = analogRead(SENSOR_M) < THRESHOLD;
-    bool r1 = analogRead(SENSOR_R1) < THRESHOLD;
-    bool r2 = analogRead(SENSOR_R2) < THRESHOLD;
+    // bool l2 = analogRead(SENSOR_L2) < THRESHOLD;
+    // bool l1 = analogRead(SENSOR_L1) < THRESHOLD;
+    // bool m = analogRead(SENSOR_M) < THRESHOLD;
+    // bool r1 = analogRead(SENSOR_R1) < THRESHOLD;
+    // bool r2 = analogRead(SENSOR_R2) < THRESHOLD;
 
-    double steerAngle = 0;
+    // double steerAngle = 0;
 
-    if (m)
-    {
-        steerAngle = 0;
-        lastErrorDirection = 0;
-    }
-    else if (l1)
-    {
-        steerAngle = TURN_LIMIT * 0.6;
-        lastErrorDirection = 1;
-    }
-    else if (r1)
-    {
-        steerAngle = -TURN_LIMIT * 0.6;
-        lastErrorDirection = -1;
-    }
-    else if (l2)
-    {
-        steerAngle = TURN_LIMIT;
-        lastErrorDirection = 1;
-    }
-    else if (r2)
-    {
-        steerAngle = -TURN_LIMIT;
-        lastErrorDirection = -1;
-    }
-    else
-    {
-        steerAngle = TURN_LIMIT * 1.2 * lastErrorDirection;
-    }
+    // if (m)
+    // {
+    //     steerAngle = 0;
+    //     lastErrorDirection = 0;
+    // }
+    // else if (l1)
+    // {
+    //     steerAngle = TURN_LIMIT * 0.6;
+    //     lastErrorDirection = 1;
+    // }
+    // else if (r1)
+    // {
+    //     steerAngle = -TURN_LIMIT * 0.6;
+    //     lastErrorDirection = -1;
+    // }
+    // else if (l2)
+    // {
+    //     steerAngle = TURN_LIMIT;
+    //     lastErrorDirection = 1;
+    // }
+    // else if (r2)
+    // {
+    //     steerAngle = -TURN_LIMIT;
+    //     lastErrorDirection = -1;
+    // }
+    // else
+    // {
+    //     steerAngle = TURN_LIMIT * 1.2 * lastErrorDirection;
+    // }
 
-    int finalServoAngle = SERVO_CENTER + steerAngle;
-    finalServoAngle = constrain(finalServoAngle, 45, 135);
-    myservo.write(finalServoAngle);
+    // int finalServoAngle = SERVO_CENTER + steerAngle;
+    // finalServoAngle = constrain(finalServoAngle, 45, 135);
+    // myservo.write(finalServoAngle);
 
-    int turnAdj = steerAngle * KP;
+    // int turnAdj = steerAngle * KP;
 
-    int speedA = (BASE_SPEED + SPEED_DIFF) - turnAdj;
+    // int speedA = (BASE_SPEED + SPEED_DIFF) - turnAdj;
 
-    int speedB = (BASE_SPEED - SPEED_DIFF) + turnAdj;
+    // int speedB = (BASE_SPEED - SPEED_DIFF) + turnAdj;
 
-    speedA = constrain(speedA, 0, 255);
-    speedB = constrain(speedB, 0, 255);
+    // speedA = constrain(speedA, 0, 255);
+    // speedB = constrain(speedB, 0, 255);
 
-    A_Motor(HIGH, speedA);
-    B_Motor(LOW, speedB);
+    // A_Motor(HIGH, speedA);
+    // B_Motor(LOW, speedB);
 
-    delay(10);
+    // delay(10);
+
+    int8_t baseSpeed = 200; //基础速度值
+    int8_t speedDiff = 30; //速度差值
+    A_Motor(HIGH, baseSpeed + speedDiff);
+    B_Motor(LOW, baseSpeed - speedDiff);
 }
