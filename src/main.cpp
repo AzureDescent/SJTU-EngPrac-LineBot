@@ -13,7 +13,7 @@ uint16_t sensorValue_M;
 uint16_t sensorValue_R1;
 uint16_t sensorValue_R2;
 
-// --- 你的原始参数 ---
+// --- 原始参数 ---
 const int THRESHOLD = 740;
 const int SERVO_CENTER = 90;
 const int SPEED_DIFF = 9;
@@ -101,17 +101,6 @@ void SensorPrint()
     Serial.print(",");
     Serial.println(sensorValue_R2);
 }
-
-// void MotorTest()
-// {
-//     // NOTE: A HIGH 电平为正转 B LOW 电平为正转
-
-//     int8_t baseSpeed = 200; //基础速度值
-//     int8_t speedDiff = 9; //速度差值
-//     // 当前差速可以走直线
-//     A_Motor(HIGH, baseSpeed + speedDiff);
-//     B_Motor(LOW, baseSpeed - speedDiff);
-// }
 
 void ServoTest()
 {
@@ -203,14 +192,14 @@ void loop() {
     int speedB = currentBaseSpeed - SPEED_DIFF;
 
     if (pidOutput > 0) { // 向左转 (Left Turn)
-        // 外侧轮(A/右) 加速不宜过多，防止冲出去
+        // 外侧轮(A/左) 加速不宜过多，防止冲出去
         speedA -= speedAdj * 0.3;
-        // 内侧轮(B/左) 疯狂减速甚至反转
+        // 内侧轮(B/右) 疯狂减速甚至反转
         speedB += speedAdj * 1.2;
     } else { // 向右转 (Right Turn)
-        // 内侧轮(A/右) 疯狂减速甚至反转
+        // 内侧轮(A/左) 疯狂减速甚至反转
         speedA += speedAdj * 1.2;
-        // 外侧轮(B/左) 加速不宜过多
+        // 外侧轮(B/右) 加速不宜过多
         speedB -= speedAdj * 0.3;
     }
 
