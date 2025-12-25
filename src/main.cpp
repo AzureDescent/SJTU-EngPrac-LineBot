@@ -124,7 +124,7 @@ void setup()
     SensorInit();
     MotorInit();
 
-    myservo.write(92);
+    myservo.write(88);
     delay(100);
 }
 
@@ -187,7 +187,7 @@ void loop()
     // delay(10);
 
     int8_t baseSpeed = 200; //基础速度值
-    int8_t speedDiff = 30; //速度差值
+    int8_t speedDiff = 27; //速度差值
     A_Motor(HIGH, baseSpeed + speedDiff);
     B_Motor(LOW, baseSpeed - speedDiff);
 }
