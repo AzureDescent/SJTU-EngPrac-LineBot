@@ -130,6 +130,7 @@ void setup()
 
 void loop()
 {
+    // 读取传感器值
     bool l2 = analogRead(SENSOR_L2) < THRESHOLD;
     bool l1 = analogRead(SENSOR_L1) < THRESHOLD;
     bool m = analogRead(SENSOR_M) < THRESHOLD;
@@ -138,6 +139,7 @@ void loop()
 
     double steerAngle = 0;
 
+    // 根据传感器值计算转向角度
     if (m)
     {
         steerAngle = 0;
@@ -145,7 +147,7 @@ void loop()
     }
     else if (l1)
     {
-        steerAngle = TURN_LIMIT * 0.6;
+        steerAngle = TURN_LIMIT * 0.6; // 小角度转向
         lastErrorDirection = 1;
     }
     else if (r1)
@@ -155,7 +157,7 @@ void loop()
     }
     else if (l2)
     {
-        steerAngle = TURN_LIMIT;
+        steerAngle = TURN_LIMIT; // 大角度转向
         lastErrorDirection = 1;
     }
     else if (r2)
@@ -165,24 +167,30 @@ void loop()
     }
     else
     {
-        steerAngle = TURN_LIMIT * 1.2 * lastErrorDirection;
+        steerAngle = TURN_LIMIT * 1.2 * lastErrorDirection; // 继续向最后一个方向转
     }
 
+    // 设置舵机角度
     int finalServoAngle = SERVO_CENTER + steerAngle;
     finalServoAngle = constrain(finalServoAngle, 45, 135);
     myservo.write(finalServoAngle);
 
+    // 根据转向角度调整电机速度
     int turnAdj = steerAngle * KP;
 
+    // 计算电机速度
     int speedA = (BASE_SPEED + SPEED_DIFF) - turnAdj;
 
     int speedB = (BASE_SPEED - SPEED_DIFF) + turnAdj;
 
+    // 限制速度在0-255之间
     speedA = constrain(speedA, 0, 255);
     speedB = constrain(speedB, 0, 255);
 
+    // 设置电机速度和方向
     A_Motor(HIGH, speedA);
     B_Motor(LOW, speedB);
 
+    // 短延时，稳定控制循环
     delay(10);
 }
